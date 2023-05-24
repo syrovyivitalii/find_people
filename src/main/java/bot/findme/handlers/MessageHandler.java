@@ -16,6 +16,9 @@ import org.telegram.telegrambots.meta.api.methods.ParseMode;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 
@@ -58,6 +61,7 @@ public class MessageHandler implements Handler<Message>{
         String phoneRegex = "^\\+380\\d{9}$";
         String passportRegex = "^\\d{9}$";
         String lettersRegex = "^[а-щА-ЩЬьЮюЯяЇїІіЄєҐґ]+$";
+        String formatPattern = "dd/MM/yyyy";
         //check user
         if (byUserID.isPresent()){
             user = byUserID.get();
@@ -68,9 +72,15 @@ public class MessageHandler implements Handler<Message>{
         if (message.hasText()){
             log.info("{}:{}", message.getChatId(), message.getText());
             if (messageText.equals("/start")){
-                userRepository.setCommand(null,userId);
-                userRepository.setValue(null,userId);
-                userRepository.setSetPassport(null,userId);
+                user.setCommand(null);
+                user.setValue(null);
+                user.setSet_passport(null);
+                user.setSet_first_name(null);
+                user.setSet_last_name(null);
+                user.setSet_middle_name(null);
+                user.setSet_date_of_birth(null);
+                user.setSet_city(null);
+                userRepository.save(user);
 
                 Optional<Menu> byId = menuRepository.findById(1L);
                 if (byId.isPresent()){
@@ -87,6 +97,17 @@ public class MessageHandler implements Handler<Message>{
                         messageSender.sendMessage(sendMessage);
                         userRepository.setCommand(messageText,userId);
                         userRepository.setValue("passport",userId);
+                    }
+                } else if (messageText.equals("Перегляд інформації щодо знайдених осіб \uD83D\uDC6B")) {
+                    Optional<Menu> byId = menuRepository.findById(15L);
+                    if (byId.isPresent()){
+                        sendMessage.setText(byId.get().getMenu());
+                        messageSender.sendMessage(sendMessage);
+                        if (byUserID.isPresent()){
+                            user.setCommand(messageText);
+                            user.setValue("lastName");
+                            userRepository.save(user);
+                        }
                     }
                 }
             }else {
@@ -226,6 +247,96 @@ public class MessageHandler implements Handler<Message>{
                             submitNotorietyRepository.save(submitNotoriety);
 
                             Optional<Menu> byId = menuRepository.findById(9L);
+                            if (byId.isPresent()){
+                                sendMessage.setText(byId.get().getMenu());
+                                messageSender.sendMessage(sendMessage);
+                            }
+                        }
+                    }
+                } else if (user.getCommand().equals("Перегляд інформації щодо знайдених осіб \uD83D\uDC6B")) {
+                    if (user.getValue().equals("lastName")){
+                        if (messageText.matches(lettersRegex)){
+                            user.setSet_last_name(messageText);
+                            userRepository.save(user);
+
+                            Optional<Menu> byId = menuRepository.findById(16L);
+                            if (byId.isPresent()){
+                                sendMessage.setText(byId.get().getMenu());
+                                messageSender.sendMessage(sendMessage);
+                                user.setValue("firstName");
+                                userRepository.save(user);
+                            }
+                        }else {
+                            Optional<Menu> byId = menuRepository.findById(12L);
+                            if (byId.isPresent()){
+                                sendMessage.setText(byId.get().getMenu());
+                                messageSender.sendMessage(sendMessage);
+                            }
+                        }
+                    } else if (user.getValue().equals("firstName")) {
+                        if (messageText.matches(lettersRegex)){
+                            user.setSet_first_name(messageText);
+                            userRepository.save(user);
+
+                            Optional<Menu> byId = menuRepository.findById(17L);
+                            if (byId.isPresent()){
+                                sendMessage.setText(byId.get().getMenu());
+                                messageSender.sendMessage(sendMessage);
+                                user.setValue("middleName");
+                                userRepository.save(user);
+                            }
+                        }else {
+                            Optional<Menu> byId = menuRepository.findById(13L);
+                            if (byId.isPresent()){
+                                sendMessage.setText(byId.get().getMenu());
+                                messageSender.sendMessage(sendMessage);
+                            }
+                        }
+                    }else if (user.getValue().equals("middleName")) {
+                        if (messageText.matches(lettersRegex)){
+                            user.setSet_middle_name(messageText);
+                            userRepository.save(user);
+
+                            Optional<Menu> byId = menuRepository.findById(18L);
+                            if (byId.isPresent()){
+                                sendMessage.setText(byId.get().getMenu());
+                                messageSender.sendMessage(sendMessage);
+                                user.setValue("dateOfBirth");
+                                userRepository.save(user);
+                            }
+                        }else {
+                            Optional<Menu> byId = menuRepository.findById(14L);
+                            if (byId.isPresent()){
+                                sendMessage.setText(byId.get().getMenu());
+                                messageSender.sendMessage(sendMessage);
+                            }
+                        }
+                    }else if (user.getValue().equals("dateOfBirth")) {
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(formatPattern);
+                        try{
+                            LocalDate dateOfBirth = LocalDate.parse(messageText,formatter);
+                            user.setSet_date_of_birth(dateOfBirth);
+
+                            Optional<Menu> byId = menuRepository.findById(19L);
+                            if (byId.isPresent()){
+                                sendMessage.setText(byId.get().getMenu());
+                                messageSender.sendMessage(sendMessage);
+                                user.setValue("city");
+                            }
+                            userRepository.save(user);
+                        }catch (DateTimeParseException e){
+                            Optional<Menu> byId = menuRepository.findById(20L);
+                            if (byId.isPresent()){
+                                sendMessage.setText(byId.get().getMenu());
+                                messageSender.sendMessage(sendMessage);
+                            }
+                        }
+                    }else {
+                        if (messageText.matches(lettersRegex)){
+                            user.setSet_city(messageText);
+                            userRepository.save(user);
+                        }else {
+                            Optional<Menu> byId = menuRepository.findById(21L);
                             if (byId.isPresent()){
                                 sendMessage.setText(byId.get().getMenu());
                                 messageSender.sendMessage(sendMessage);
