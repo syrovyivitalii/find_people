@@ -1,15 +1,9 @@
 package bot.findme.handlers;
 
 import bot.findme.messagesender.MessageSender;
-import bot.findme.model.Keyboard;
-import bot.findme.model.Menu;
-import bot.findme.model.SubmitNotoriety;
-import bot.findme.model.User;
-import bot.findme.repository.KeyboardRepository;
-import bot.findme.repository.MenuRepository;
+import bot.findme.model.*;
+import bot.findme.repository.*;
 import bot.findme.service.ReplyKeyboard;
-import bot.findme.repository.SubmitNotorietyRepository;
-import bot.findme.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.ParseMode;
@@ -32,16 +26,18 @@ public class MessageHandler implements Handler<Message>{
     private final MenuRepository menuRepository;
     private final KeyboardRepository keyboardRepository;
     private final ReplyKeyboard replyKeyboard;
+    private final FoundPeopleRepository foundPeopleRepository;
 
     public MessageHandler(MessageSender messageSender, MenuRepository menuRepository, KeyboardRepository keyboardRepository, ReplyKeyboard replyKeyboard,
                           UserRepository userRepository,
-                          SubmitNotorietyRepository submitNotorietyRepository) {
+                          SubmitNotorietyRepository submitNotorietyRepository, FoundPeopleRepository foundPeopleRepository) {
         this.messageSender = messageSender;
         this.menuRepository = menuRepository;
         this.keyboardRepository = keyboardRepository;
         this.replyKeyboard = replyKeyboard;
         this.userRepository = userRepository;
         this.submitNotorietyRepository = submitNotorietyRepository;
+        this.foundPeopleRepository = foundPeopleRepository;
     }
 
     @Override
@@ -335,6 +331,23 @@ public class MessageHandler implements Handler<Message>{
                         if (messageText.matches(lettersRegex)){
                             user.setSet_city(messageText);
                             userRepository.save(user);
+                            List<String> foundPeople = foundPeopleRepository.findMatchingRows(user.getSet_first_name(),user.getSet_last_name(),user.getSet_middle_name(),user.getSet_date_of_birth(),user.getSet_city());
+                            if (!foundPeople.isEmpty()){
+                                for (String found : foundPeople) {
+                                    String text = "<b>Особу було знайдено:</b>\n\n" +
+                                            "\uD83D\uDC64 ПІП: " + user.getSet_last_name() + " " + user.getSet_first_name() + " " + user.getSet_middle_name() + "\n\n"+
+                                            "\uD83D\uDCC5 Дата народження: " + user.getSet_date_of_birth() +"\n\n" +
+                                            "\uD83C\uDFE0 Місце проживання " + user.getSet_city() + "\n\n" +
+                                            "\uD83D\uDCDD Інформація про знайденого: " + found;
+                                    sendMessage.setText(text);
+                                }
+                            }else {
+                                Optional<Menu> byId = menuRepository.findById(22L);
+                                if (byId.isPresent()){
+                                    sendMessage.setText(byId.get().getMenu());
+                                }
+                            }
+                            messageSender.sendMessage(sendMessage);
                         }else {
                             Optional<Menu> byId = menuRepository.findById(21L);
                             if (byId.isPresent()){
