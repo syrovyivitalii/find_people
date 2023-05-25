@@ -109,37 +109,27 @@ public class MessageHandler implements Handler<Message>{
             }else {
                 if (user.getCommand().equals("Подання відомості про зниклу особу \uD83D\uDCCB")){
                     if (user.getValue().equals("passport")) {
-                        Optional<SubmitNotoriety> byPassport = submitNotorietyRepository.findByPassport(messageText);
-                        if (byPassport.isPresent()){
-                            Optional<Menu> byId = menuRepository.findById(8L);
+                        if (messageText.matches(passportRegex)){
+                            submitNotoriety.setPassport(messageText);
+                            submitNotorietyRepository.save(submitNotoriety);
+
+                            user.setSet_passport(messageText);
+                            userRepository.save(user);
+
+                            Optional<Menu> byId = menuRepository.findById(6L);
+                            if (byId.isPresent()){
+                                sendMessage.setText(byId.get().getMenu());
+                                messageSender.sendMessage(sendMessage);
+                                userRepository.setValue("phone", userId);
+                            }
+
+                        }else {
+                            Optional<Menu> byId = menuRepository.findById(11L);
                             if (byId.isPresent()){
                                 sendMessage.setText(byId.get().getMenu());
                                 messageSender.sendMessage(sendMessage);
                             }
-                        }else {
-                            if (messageText.matches(passportRegex)){
-                                submitNotoriety.setPassport(messageText);
-                                submitNotorietyRepository.save(submitNotoriety);
-
-                                user.setSet_passport(messageText);
-                                userRepository.save(user);
-
-                                Optional<Menu> byId = menuRepository.findById(3L);
-                                if (byId.isPresent()){
-                                    sendMessage.setText(byId.get().getMenu());
-                                    messageSender.sendMessage(sendMessage);
-                                    userRepository.setValue("lastName", userId);
-                                }
-
-                            }else {
-                                Optional<Menu> byId = menuRepository.findById(11L);
-                                if (byId.isPresent()){
-                                    sendMessage.setText(byId.get().getMenu());
-                                    messageSender.sendMessage(sendMessage);
-                                }
-                            }
                         }
-
                     } else if (user.getValue().equals("lastName")) {
                         Optional<SubmitNotoriety> byPassport = submitNotorietyRepository.findByPassport(user.getSet_passport());
                         if (messageText.matches(lettersRegex)){
@@ -195,12 +185,12 @@ public class MessageHandler implements Handler<Message>{
                                 submitNotoriety.setMiddle_name(messageText);
                                 submitNotorietyRepository.save(submitNotoriety);
 
-                                Optional<Menu> byId = menuRepository.findById(6L);
+                                Optional<Menu> byId = menuRepository.findById(7L);
                                 if (byId.isPresent()){
                                     sendMessage.setText(byId.get().getMenu());
                                     messageSender.sendMessage(sendMessage);
 
-                                    userRepository.setValue("phone", userId);
+                                    userRepository.setValue("info", userId);
                                 }
                             }
                         }else {
@@ -219,12 +209,12 @@ public class MessageHandler implements Handler<Message>{
                                 submitNotoriety.setPhone(messageText);
                                 submitNotorietyRepository.save(submitNotoriety);
 
-                                Optional<Menu> byId = menuRepository.findById(7L);
+                                Optional<Menu> byId = menuRepository.findById(3L);
                                 if (byId.isPresent()){
                                     sendMessage.setText(byId.get().getMenu());
                                     messageSender.sendMessage(sendMessage);
 
-                                    userRepository.setValue("info", userId);
+                                    userRepository.setValue("lastName", userId);
                                 }
                             }
                         } else {
@@ -333,21 +323,22 @@ public class MessageHandler implements Handler<Message>{
                             userRepository.save(user);
                             List<String> foundPeople = foundPeopleRepository.findMatchingRows(user.getSet_first_name(),user.getSet_last_name(),user.getSet_middle_name(),user.getSet_date_of_birth(),user.getSet_city());
                             if (!foundPeople.isEmpty()){
-                                for (String found : foundPeople) {
+                                for (int i = 0; i < foundPeople.size(); i++){
                                     String text = "<b>Особу було знайдено:</b>\n\n" +
                                             "\uD83D\uDC64 ПІП: " + user.getSet_last_name() + " " + user.getSet_first_name() + " " + user.getSet_middle_name() + "\n\n"+
                                             "\uD83D\uDCC5 Дата народження: " + user.getSet_date_of_birth() +"\n\n" +
                                             "\uD83C\uDFE0 Місце проживання " + user.getSet_city() + "\n\n" +
-                                            "\uD83D\uDCDD Інформація про знайденого: " + found;
+                                            "\uD83D\uDCDD Інформація про знайденого: " + foundPeople.get(i);
                                     sendMessage.setText(text);
+                                    messageSender.sendMessage(sendMessage);
                                 }
                             }else {
                                 Optional<Menu> byId = menuRepository.findById(22L);
                                 if (byId.isPresent()){
                                     sendMessage.setText(byId.get().getMenu());
+                                    messageSender.sendMessage(sendMessage);
                                 }
                             }
-                            messageSender.sendMessage(sendMessage);
                         }else {
                             Optional<Menu> byId = menuRepository.findById(21L);
                             if (byId.isPresent()){
