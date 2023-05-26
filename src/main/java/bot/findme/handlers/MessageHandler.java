@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Component
@@ -27,10 +28,11 @@ public class MessageHandler implements Handler<Message>{
     private final KeyboardRepository keyboardRepository;
     private final ReplyKeyboard replyKeyboard;
     private final FoundPeopleRepository foundPeopleRepository;
+    private final QuestionsRepository questionsRepository;
 
     public MessageHandler(MessageSender messageSender, MenuRepository menuRepository, KeyboardRepository keyboardRepository, ReplyKeyboard replyKeyboard,
                           UserRepository userRepository,
-                          SubmitNotorietyRepository submitNotorietyRepository, FoundPeopleRepository foundPeopleRepository) {
+                          SubmitNotorietyRepository submitNotorietyRepository, FoundPeopleRepository foundPeopleRepository, QuestionsRepository questionsRepository) {
         this.messageSender = messageSender;
         this.menuRepository = menuRepository;
         this.keyboardRepository = keyboardRepository;
@@ -38,6 +40,7 @@ public class MessageHandler implements Handler<Message>{
         this.userRepository = userRepository;
         this.submitNotorietyRepository = submitNotorietyRepository;
         this.foundPeopleRepository = foundPeopleRepository;
+        this.questionsRepository = questionsRepository;
     }
 
     @Override
@@ -104,6 +107,23 @@ public class MessageHandler implements Handler<Message>{
                             user.setValue("lastName");
                             userRepository.save(user);
                         }
+                    }
+                } else if (messageText.equals("Отримайте відповіді на поширені запитання ❔")) {
+                    Optional<Menu> byId = menuRepository.findById(23L);
+                    List<Keyboard> questions = keyboardRepository.findByMenu("запитання");
+                    if (byId.isPresent()){
+                        sendMessage.setText(byId.get().getMenu());
+                        sendMessage.setReplyMarkup(replyKeyboard.getCreateKeyboard(questions));
+                        messageSender.sendMessage(sendMessage);
+                        user.setCommand(messageText);
+                        user.setValue(messageText);
+                        userRepository.save(user);
+                    }
+                }else {
+                    Optional<Menu> byId = menuRepository.findById(24L);
+                    if (byId.isPresent()){
+                        sendMessage.setText(byId.get().getMenu());
+                        messageSender.sendMessage(sendMessage);
                     }
                 }
             }else {
@@ -347,6 +367,19 @@ public class MessageHandler implements Handler<Message>{
                             }
                         }
                     }
+                }else {
+                    try{
+                        Optional<Questions> byId = questionsRepository.findById(Long.valueOf(messageText));
+                        sendMessage.setText(byId.get().getAnswer());
+                        messageSender.sendMessage(sendMessage);
+                    }catch (NoSuchElementException e){
+                        Optional<Menu> byId = menuRepository.findById(25L);
+                        if (byId.isPresent()){
+                            sendMessage.setText(byId.get().getMenu());
+                            messageSender.sendMessage(sendMessage);
+                        }
+                    }
+
                 }
             }
         }

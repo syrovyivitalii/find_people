@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 @Component
 public class ReplyKeyboard {
-    private ReplyKeyboardMarkup createKeyboard(List<Keyboard> keyboards) {
+    private ReplyKeyboardMarkup createKeyboard (List<Keyboard> keyboards) {
         // Створюємо клавіатуру
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
         replyKeyboardMarkup.setSelective(true);
@@ -18,11 +18,19 @@ public class ReplyKeyboard {
         replyKeyboardMarkup.setOneTimeKeyboard(false);
 
         List<KeyboardRow> rows = new ArrayList<>();
+        KeyboardRow row = new KeyboardRow();
 
         for (Keyboard keyboard : keyboards) {
-            KeyboardRow row = new KeyboardRow();
             KeyboardButton keyboardButton = new KeyboardButton(keyboard.getKeyboard());
             row.add(keyboardButton);
+
+            if (row.size() == keyboard.getButtons_per_row()) {
+                rows.add(row);
+                row = new KeyboardRow();
+            }
+        }
+
+        if (!row.isEmpty()) {
             rows.add(row);
         }
 
