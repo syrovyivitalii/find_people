@@ -94,8 +94,9 @@ public class MessageHandler implements Handler<Message>{
                     if (byId.isPresent()){
                         sendMessage.setText(byId.get().getMenu());
                         messageSender.sendMessage(sendMessage);
-                        userRepository.setCommand(messageText,userId);
-                        userRepository.setValue("passport",userId);
+                        user.setCommand(messageText);
+                        user.setValue("passport");
+                        userRepository.save(user);
                     }
                 } else if (messageText.equals("Перегляд інформації щодо знайдених осіб \uD83D\uDC6B")) {
                     Optional<Menu> byId = menuRepository.findById(15L);
@@ -140,7 +141,8 @@ public class MessageHandler implements Handler<Message>{
                             if (byId.isPresent()){
                                 sendMessage.setText(byId.get().getMenu());
                                 messageSender.sendMessage(sendMessage);
-                                userRepository.setValue("phone", userId);
+                                user.setValue("phone");
+                                userRepository.save(user);
                             }
 
                         }else {
@@ -162,8 +164,8 @@ public class MessageHandler implements Handler<Message>{
                                 if (byId.isPresent()){
                                     sendMessage.setText(byId.get().getMenu());
                                     messageSender.sendMessage(sendMessage);
-
-                                    userRepository.setValue("firstName", userId);
+                                    user.setValue("firstName");
+                                    userRepository.save(user);
                                 }
                             }
 
@@ -186,8 +188,8 @@ public class MessageHandler implements Handler<Message>{
                                 if (byId.isPresent()){
                                     sendMessage.setText(byId.get().getMenu());
                                     messageSender.sendMessage(sendMessage);
-
-                                    userRepository.setValue("middleName", userId);
+                                    user.setValue("middleName");
+                                    userRepository.save(user);
                                 }
                             }
                         }else {
@@ -209,8 +211,8 @@ public class MessageHandler implements Handler<Message>{
                                 if (byId.isPresent()){
                                     sendMessage.setText(byId.get().getMenu());
                                     messageSender.sendMessage(sendMessage);
-
-                                    userRepository.setValue("info", userId);
+                                    user.setValue("info");
+                                    userRepository.save(user);
                                 }
                             }
                         }else {
@@ -233,8 +235,8 @@ public class MessageHandler implements Handler<Message>{
                                 if (byId.isPresent()){
                                     sendMessage.setText(byId.get().getMenu());
                                     messageSender.sendMessage(sendMessage);
-
-                                    userRepository.setValue("lastName", userId);
+                                    user.setValue("lastName");
+                                    userRepository.save(user);
                                 }
                             }
                         } else {
@@ -343,12 +345,12 @@ public class MessageHandler implements Handler<Message>{
                             userRepository.save(user);
                             List<String> foundPeople = foundPeopleRepository.findMatchingRows(user.getSet_first_name(),user.getSet_last_name(),user.getSet_middle_name(),user.getSet_date_of_birth(),user.getSet_city());
                             if (!foundPeople.isEmpty()){
-                                for (int i = 0; i < foundPeople.size(); i++){
+                                for (String foundPerson : foundPeople) {
                                     String text = "<b>Особу було знайдено:</b>\n\n" +
-                                            "\uD83D\uDC64 ПІП: " + user.getSet_last_name() + " " + user.getSet_first_name() + " " + user.getSet_middle_name() + "\n\n"+
-                                            "\uD83D\uDCC5 Дата народження: " + user.getSet_date_of_birth() +"\n\n" +
+                                            "\uD83D\uDC64 ПІП: " + user.getSet_last_name() + " " + user.getSet_first_name() + " " + user.getSet_middle_name() + "\n\n" +
+                                            "\uD83D\uDCC5 Дата народження: " + user.getSet_date_of_birth() + "\n\n" +
                                             "\uD83C\uDFE0 Місце проживання " + user.getSet_city() + "\n\n" +
-                                            "\uD83D\uDCDD Інформація про знайденого: " + foundPeople.get(i);
+                                            "\uD83D\uDCDD Інформація про знайденого: " + foundPerson;
                                     sendMessage.setText(text);
                                     messageSender.sendMessage(sendMessage);
                                 }
@@ -368,18 +370,17 @@ public class MessageHandler implements Handler<Message>{
                         }
                     }
                 }else {
-                    try{
-                        Optional<Questions> byId = questionsRepository.findById(Long.valueOf(messageText));
+                    Optional<Questions> byId = questionsRepository.findById(Long.valueOf(messageText));
+                    if (byId.isPresent()){
                         sendMessage.setText(byId.get().getAnswer());
                         messageSender.sendMessage(sendMessage);
-                    }catch (NoSuchElementException e){
-                        Optional<Menu> byId = menuRepository.findById(25L);
-                        if (byId.isPresent()){
-                            sendMessage.setText(byId.get().getMenu());
+                    }else{
+                        Optional<Menu> menu = menuRepository.findById(25L);
+                        if (menu.isPresent()){
+                            sendMessage.setText(menu.get().getMenu());
                             messageSender.sendMessage(sendMessage);
                         }
                     }
-
                 }
             }
         }
