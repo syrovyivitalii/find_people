@@ -5,13 +5,11 @@ import lombok.Data;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "replykeyboard", schema = "public")
+@Table(name = "questions", schema = "public")
 @Data
-public class Keyboard {
+public class Questions {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String menu;
-    private String keyboard;
-    private Integer buttons_per_row;
+    private String answer;
 }
